@@ -4,13 +4,16 @@ pipeline {
   environment {
     AWS_REGION = 'us-east-1'
     ECR_REPO   = '992382545251.dkr.ecr.us-east-1.amazonaws.com/rotemamit/final_cicd_exam'
+    APP_DIR    = 'calculator-app-v2'
   }
 
   stages {
     stage('Build Image') {
       agent any
       steps {
-        sh 'docker build -t calculator-app:${BUILD_NUMBER} .'
+        dir("${APP_DIR}") {
+          sh 'docker build -t calculator-app:${BUILD_NUMBER} .'
+        }
       }
     }
 
@@ -22,14 +25,16 @@ pipeline {
         }
       }
       steps {
-        sh '''
-          pip install --no-cache-dir -r requirements.txt pytest
-          pytest --junitxml=results.xml tests/
-        '''
+        dir("${APP_DIR}") {
+          sh '''
+            pip install --no-cache-dir -r requirements.txt pytest
+            pytest --junitxml=results.xml tests/
+          '''
+        }
       }
       post {
         always {
-          junit 'results.xml'
+          junit "${APP_DIR}/results.xml"
         }
       }
     }
