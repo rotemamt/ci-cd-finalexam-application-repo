@@ -28,7 +28,7 @@ pipeline {
         dir("${APP_DIR}") {
           sh '''
             pip install --no-cache-dir -r requirements.txt pytest
-	    PYTHONPATH=. pytest --junitxml=results.xml tests/
+            PYTHONPATH=. pytest --junitxml=results.xml tests/
           '''
         }
       }
@@ -43,7 +43,7 @@ pipeline {
       agent any
       when { changeRequest() }
       steps {
-        withAWS(credentials: '47554446-a967-4a09-b5b0-33ca9dd7c93f', region: "${AWS_REGION}") {
+        withCredentials([usernamePassword(credentialsId: '47554446-a967-4a09-b5b0-33ca9dd7c93f', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
           sh '''
             aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO}
             docker tag calculator-app:${BUILD_NUMBER} ${ECR_REPO}:pr-${CHANGE_ID}-${BUILD_NUMBER}
