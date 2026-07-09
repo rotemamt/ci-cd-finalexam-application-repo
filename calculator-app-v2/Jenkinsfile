@@ -43,7 +43,7 @@ pipeline {
       agent any
       when { changeRequest() }
       steps {
-        withCredentials([usernamePassword(credentialsId: '47554446-a967-4a09-b5b0-33ca9dd7c93f', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+        withAWS(credentials: '47554446-a967-4a09-b5b0-33ca9dd7c93f', region: "${AWS_REGION}") {
           sh '''
             aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO}
             docker tag calculator-app:${BUILD_NUMBER} ${ECR_REPO}:pr-${CHANGE_ID}-${BUILD_NUMBER}
