@@ -28,7 +28,7 @@ pipeline {
         dir("${APP_DIR}") {
           sh '''
             pip install --no-cache-dir -r requirements.txt pytest
-            pytest --junitxml=results.xml tests/
+	    PYTHONPATH=. pytest --junitxml=results.xml tests/
           '''
         }
       }
