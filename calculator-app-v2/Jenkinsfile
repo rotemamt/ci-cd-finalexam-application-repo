@@ -1,0 +1,51 @@
+pipeline {
+  agent none
+
+  environment {
+    AWS_REGION = 'us-east-1'
+    ECR_REPO   = '992382545251.dkr.ecr.us-east-1.amazonaws.com/rotemamit/final_cicd_exam'
+  }
+
+  stages {
+    stage('Build Image') {
+      agent any
+      steps {
+        sh 'docker build -t calculator-app:${BUILD_NUMBER} .'
+      }
+    }
+
+    stage('Test') {
+      agent {
+        docker {
+          image 'python:3.11-slim'
+          args '-u root'
+        }
+      }
+      steps {
+        sh '''
+          pip install --no-cache-dir -r requirements.txt pytest
+          pytest --junitxml=results.xml tests/
+        '''
+      }
+      post {
+        always {
+          junit 'results.xml'
+        }
+      }
+    }
+
+    stage('Push to ECR') {
+      agent any
+      when { changeRequest() }
+      steps {
+        withAWS(credentials: '47554446-a967-4a09-b5b0-33ca9dd7c93f', region: "${AWS_REGION}") {
+          sh '''
+            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO}
+            docker tag calculator-app:${BUILD_NUMBER} ${ECR_REPO}:pr-${CHANGE_ID}-${BUILD_NUMBER}
+            docker push ${ECR_REPO}:pr-${CHANGE_ID}-${BUILD_NUMBER}
+          '''
+        }
+      }
+    }
+  }
+}
